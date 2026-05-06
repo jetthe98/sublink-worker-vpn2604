@@ -47,6 +47,24 @@ describe('Surge subscription fixes', () => {
         expect(text).toContain('[Rule]');
     });
 
+    it('GET /surge uses short URL in MANAGED-CONFIG to avoid long filenames', async () => {
+        const app = createTestApp();
+        const config = encodeURIComponent(proxyUri);
+        const longQuery = `?config=${config}&ua=&selectedRules=["Location/CN","Private","Non-China","Github","Google","Youtube","AI+Services","Telegram"]&customRules=[]&group_by_country=true`;
+
+        const res = await app.request(`http://localhost/surge${longQuery}`);
+
+        expect(res.status).toBe(200);
+        const text = await res.text();
+        const managedLine = text.split('\n').find(line => line.includes('#!MANAGED-CONFIG'));
+        expect(managedLine).toBeTruthy();
+        const shortUrlMatch = managedLine.match(/#!MANAGED-CONFIG\s+(.+?)\s+interval/);
+        expect(shortUrlMatch).toBeTruthy();
+        const managedUrl = shortUrlMatch[1];
+        expect(managedUrl).toMatch(/\/s\//);
+        expect(managedUrl.length).toBeLessThan(60);
+    });
+
     it('GET /surge does not use !include prefix in proxy lines', async () => {
         const app = createTestApp();
         const config = encodeURIComponent(proxyUri);

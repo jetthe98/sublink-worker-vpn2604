@@ -204,7 +204,19 @@ export function createApp(bindings = {}) {
                 groupByCountry,
                 includeAutoSelect
             );
-            builder.setSubscriptionUrl(c.req.url);
+            const shortLinks = services.shortLinks;
+            if (shortLinks) {
+                try {
+                    const queryString = c.req.url.substring(c.req.url.indexOf('?'));
+                    const code = await shortLinks.createShortLink(queryString);
+                    const url = new URL(c.req.url);
+                    builder.setSubscriptionUrl(`${url.origin}/s/${code}`);
+                } catch (e) {
+                    builder.setSubscriptionUrl(c.req.url);
+                }
+            } else {
+                builder.setSubscriptionUrl(c.req.url);
+            }
             await builder.build();
 
             const userinfo = builder.getSubscriptionUserinfo();
@@ -378,8 +390,7 @@ export function createApp(bindings = {}) {
                     groupByCountry,
                     includeAutoSelect
                 );
-                const subscriptionUrl = `${c.req.url.split('?')[0]}${originalParam}`;
-                builder.setSubscriptionUrl(subscriptionUrl);
+                builder.setSubscriptionUrl(c.req.url);
                 await builder.build();
 
                 const userinfo = builder.getSubscriptionUserinfo();
