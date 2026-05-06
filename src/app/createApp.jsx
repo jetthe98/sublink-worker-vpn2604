@@ -211,6 +211,7 @@ export function createApp(bindings = {}) {
             if (userinfo) {
                 c.header('subscription-userinfo', userinfo);
             }
+            c.header('Content-Disposition', 'attachment; filename="surge.conf"');
             return c.text(builder.formatConfig());
         } catch (error) {
             return handleError(c, error, runtime.logger);
@@ -338,6 +339,56 @@ export function createApp(bindings = {}) {
             const shortLinks = requireShortLinkService(services.shortLinks);
             const originalParam = await shortLinks.resolveShortCode(code);
             if (!originalParam) return c.text('Short URL not found', 404);
+
+            const userAgent = getRequestHeader(c.req, 'User-Agent') || '';
+            const isSurgeUA = userAgent.toLowerCase().includes('surge');
+            const isSurgeShortLink = prefix === 'surge' && isSurgeUA;
+
+            if (isSurgeShortLink) {
+                const configParam = originalParam.startsWith('?')
+                    ? originalParam.substring(1)
+                    : originalParam;
+                const params = new URLSearchParams(configParam);
+                const config = params.get('config');
+                if (!config) {
+                    return c.text('Missing config parameter', 400);
+                }
+
+                const selectedRules = parseSelectedRules(params.get('selectedRules'));
+                const customRules = parseJsonArray(params.get('customRules'));
+                const ua = params.get('ua') || userAgent || DEFAULT_USER_AGENT;
+                const groupByCountry = parseBooleanFlag(params.get('group_by_country'));
+                const includeAutoSelect = params.get('include_auto_select') !== 'false';
+                const configId = params.get('configId');
+                const lang = c.get('lang');
+
+                let baseConfig;
+                if (configId) {
+                    const storage = requireConfigStorage(services.configStorage);
+                    baseConfig = await storage.getConfigById(configId);
+                }
+
+                const builder = new SurgeConfigBuilder(
+                    config,
+                    selectedRules,
+                    customRules,
+                    baseConfig,
+                    lang,
+                    ua,
+                    groupByCountry,
+                    includeAutoSelect
+                );
+                const subscriptionUrl = `${c.req.url.split('?')[0]}${originalParam}`;
+                builder.setSubscriptionUrl(subscriptionUrl);
+                await builder.build();
+
+                const userinfo = builder.getSubscriptionUserinfo();
+                if (userinfo) {
+                    c.header('subscription-userinfo', userinfo);
+                }
+                c.header('Content-Disposition', 'attachment; filename="surge.conf"');
+                return c.text(builder.formatConfig());
+            }
 
             const url = new URL(c.req.url);
             return c.redirect(`${url.origin}/${prefix}${originalParam}`);
