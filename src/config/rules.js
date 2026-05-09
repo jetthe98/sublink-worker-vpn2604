@@ -17,6 +17,26 @@ export const UNIFIED_RULES = [
 		ip_rules: []
 	},
 	{
+		name: 'OpenAI',
+		site_rules: ['openai'],
+		ip_rules: []
+	},
+	{
+		name: 'Discord',
+		site_rules: ['discord'],
+		ip_rules: []
+	},
+	{
+		name: 'Spotify',
+		site_rules: ['spotify'],
+		ip_rules: []
+	},
+	{
+		name: 'Speedtest',
+		site_rules: ['speedtest'],
+		ip_rules: []
+	},
+	{
 		name: 'Bilibili',
 		site_rules: ['bilibili'],
 		ip_rules: []
@@ -49,6 +69,11 @@ export const UNIFIED_RULES = [
 	{
 		name: 'Github',
 		site_rules: ['github', 'gitlab'],
+		ip_rules: []
+	},
+	{
+		name: 'Developer Tools',
+		site_rules: ['stackoverflow', 'npmjs', 'pypi', 'docker'],
 		ip_rules: []
 	},
 	{

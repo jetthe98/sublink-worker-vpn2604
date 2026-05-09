@@ -411,3 +411,139 @@ export function parseCountryFromNodeName(nodeName) {
 
 	return null;
 }
+
+export function filterProxies(proxies, filterOptions = {}) {
+	if (!Array.isArray(proxies) || proxies.length === 0) {
+		return proxies;
+	}
+
+	const { countries, excludeCountries, types, keywords, excludeKeywords, limit } = filterOptions;
+	let filtered = [...proxies];
+
+	if (countries && countries.length > 0) {
+		const countrySet = new Set(countries.map(c => c.toUpperCase()));
+		filtered = filtered.filter(proxy => {
+			const country = parseCountryFromNodeName(proxy.tag || proxy.name || '');
+			return country && countrySet.has(country.code);
+		});
+	}
+
+	if (excludeCountries && excludeCountries.length > 0) {
+		const excludeSet = new Set(excludeCountries.map(c => c.toUpperCase()));
+		filtered = filtered.filter(proxy => {
+			const country = parseCountryFromNodeName(proxy.tag || proxy.name || '');
+			return !country || !excludeSet.has(country.code);
+		});
+	}
+
+	if (types && types.length > 0) {
+		const typeSet = new Set(types.map(t => t.toLowerCase()));
+		filtered = filtered.filter(proxy => typeSet.has((proxy.type || '').toLowerCase()));
+	}
+
+	if (keywords && keywords.length > 0) {
+		filtered = filtered.filter(proxy => {
+			const name = (proxy.tag || proxy.name || '').toLowerCase();
+			return keywords.some(kw => name.includes(kw.toLowerCase()));
+		});
+	}
+
+	if (excludeKeywords && excludeKeywords.length > 0) {
+		filtered = filtered.filter(proxy => {
+			const name = (proxy.tag || proxy.name || '').toLowerCase();
+			return !excludeKeywords.some(kw => name.includes(kw.toLowerCase()));
+		});
+	}
+
+	if (limit && limit > 0) {
+		filtered = filtered.slice(0, limit);
+	}
+
+	return filtered;
+}
+
+export function sortProxies(proxies, sortOptions = {}) {
+	if (!Array.isArray(proxies) || proxies.length === 0) {
+		return proxies;
+	}
+
+	const { sortBy, sortOrder = 'asc' } = sortOptions;
+	const sorted = [...proxies];
+	const multiplier = sortOrder === 'desc' ? -1 : 1;
+
+	switch (sortBy) {
+		case 'name':
+			sorted.sort((a, b) => {
+				const nameA = (a.tag || a.name || '').toLowerCase();
+				const nameB = (b.tag || b.name || '').toLowerCase();
+				return multiplier * nameA.localeCompare(nameB);
+			});
+			break;
+		case 'country':
+			sorted.sort((a, b) => {
+				const countryA = parseCountryFromNodeName(a.tag || a.name || '');
+				const countryB = parseCountryFromNodeName(b.tag || b.name || '');
+				const nameA = countryA ? (countryA.name || countryA.code) : 'ZZZ';
+				const nameB = countryB ? (countryB.name || countryB.code) : 'ZZZ';
+				return multiplier * nameA.localeCompare(nameB);
+			});
+			break;
+		case 'type':
+			sorted.sort((a, b) => {
+				const typeA = (a.type || '').toLowerCase();
+				const typeB = (b.type || '').toLowerCase();
+				return multiplier * typeA.localeCompare(typeB);
+			});
+			break;
+		default:
+			break;
+	}
+
+	return sorted;
+}
+
+export function mergeProxies(proxyLists, options = {}) {
+	const { dedup = true, sortBy, sortOrder, filter: filterOptions, limit } = options;
+	let merged = [];
+
+	for (const list of proxyLists) {
+		if (Array.isArray(list)) {
+			merged = merged.concat(list);
+		}
+	}
+
+	if (dedup) {
+		const seen = new Set();
+		merged = merged.filter(proxy => {
+			const key = createProxyKey(proxy);
+			if (seen.has(key)) {
+				return false;
+			}
+			seen.add(key);
+			return true;
+		});
+	}
+
+	if (filterOptions) {
+		merged = filterProxies(merged, filterOptions);
+	}
+
+	if (sortBy) {
+		merged = sortProxies(merged, { sortBy, sortOrder });
+	}
+
+	if (limit && limit > 0) {
+		merged = merged.slice(0, limit);
+	}
+
+	return merged;
+}
+
+function createProxyKey(proxy) {
+	const server = proxy.server || '';
+	const port = proxy.server_port || proxy.port || '';
+	const type = proxy.type || '';
+	const uuid = proxy.uuid || '';
+	const password = proxy.password || '';
+	return `${type}:${server}:${port}:${uuid}:${password}`;
+}

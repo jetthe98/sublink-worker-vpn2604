@@ -46,4 +46,15 @@ export class MemoryKVAdapter {
             this.clearExpiration(key);
         }
     }
+
+    async list(options = {}) {
+        const prefix = options.prefix || '';
+        const keys = [];
+        for (const key of this.store.keys()) {
+            if (!prefix || key.startsWith(prefix)) {
+                keys.push({ name: key });
+            }
+        }
+        return { keys };
+    }
 }

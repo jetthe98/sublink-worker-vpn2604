@@ -458,6 +458,161 @@ export function createApp(bindings = {}) {
         }
     });
 
+    // API v1: Get rules list
+    app.get('/api/v1/rules', async (c) => {
+        try {
+            const { UNIFIED_RULES, PREDEFINED_RULE_SETS } = await import('../config/index.js');
+            return c.json({
+                rules: UNIFIED_RULES,
+                presets: Object.keys(PREDEFINED_RULE_SETS)
+            });
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    // API v1: Parse proxies from input
+    app.post('/api/v1/proxies', async (c) => {
+        try {
+            const { input, filter, sort, limit } = await c.req.json();
+            if (!input) {
+                return c.json({ error: 'Missing input' }, 400);
+            }
+
+            const { ProxyParser } = await import('../parsers/index.js');
+            const { filterProxies, sortProxies, tryDecodeSubscriptionLines } = await import('../utils.js');
+
+            const lines = input.split('\n').filter(l => l.trim());
+            const proxies = [];
+
+            for (const line of lines) {
+                const decoded = tryDecodeSubscriptionLines(line);
+                const urls = Array.isArray(decoded) ? decoded : [decoded];
+                for (const url of urls) {
+                    const proxy = await ProxyParser.parse(url);
+                    if (proxy) {
+                        proxies.push(proxy);
+                    }
+                }
+            }
+
+            let result = proxies;
+            if (filter) {
+                result = filterProxies(result, filter);
+            }
+            if (sort) {
+                result = sortProxies(result, sort);
+            }
+            if (limit && limit > 0) {
+                result = result.slice(0, limit);
+            }
+
+            return c.json({ count: result.length, proxies: result });
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    // API v1: Test proxy latency
+    app.get('/api/v1/ping', async (c) => {
+        try {
+            const server = c.req.query('server');
+            const port = parseInt(c.req.query('port') || '443', 10);
+            const timeout = parseInt(c.req.query('timeout') || '5000', 10);
+
+            if (!server) {
+                return c.json({ error: 'Missing server parameter' }, 400);
+            }
+
+            const startTime = Date.now();
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+            try {
+                const response = await fetch(`http://${server}:${port}`, {
+                    method: 'HEAD',
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                const latency = Date.now() - startTime;
+                return c.json({
+                    server,
+                    port,
+                    latency,
+                    status: 'reachable',
+                    statusCode: response.status
+                });
+            } catch (e) {
+                clearTimeout(timeoutId);
+                const latency = Date.now() - startTime;
+                return c.json({
+                    server,
+                    port,
+                    latency,
+                    status: 'unreachable',
+                    error: e.message
+                });
+            }
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    // API v1: Template management
+    app.get('/api/v1/templates', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const { TemplateService } = await import('../services/templateService.js');
+            const templates = new TemplateService(runtime.kv, runtime.config);
+            const list = await templates.listTemplates(userId);
+            return c.json({ templates: list });
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.post('/api/v1/templates', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const template = await c.req.json();
+            const { TemplateService } = await import('../services/templateService.js');
+            const templates = new TemplateService(runtime.kv, runtime.config);
+            const saved = await templates.saveTemplate(userId, template);
+            return c.json(saved);
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.get('/api/v1/templates/:id', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const templateId = c.req.param('id');
+            const { TemplateService } = await import('../services/templateService.js');
+            const templates = new TemplateService(runtime.kv, runtime.config);
+            const template = await templates.getTemplate(userId, templateId);
+            if (!template) {
+                return c.json({ error: 'Template not found' }, 404);
+            }
+            return c.json(template);
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.delete('/api/v1/templates/:id', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const templateId = c.req.param('id');
+            const { TemplateService } = await import('../services/templateService.js');
+            const templates = new TemplateService(runtime.kv, runtime.config);
+            await templates.deleteTemplate(userId, templateId);
+            return c.json({ success: true });
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
     app.get('/favicon.ico', async (c) => {
         if (!runtime.assetFetcher) {
             return c.notFound();

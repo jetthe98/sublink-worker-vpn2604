@@ -299,6 +299,20 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                     ...(proxy['idle-session-timeout'] !== undefined ? { 'idle-session-timeout': proxy['idle-session-timeout'] } : {}),
                     ...(proxy['min-idle-session'] !== undefined ? { 'min-idle-session': proxy['min-idle-session'] } : {}),
                 };
+            case 'wireguard':
+                return {
+                    name: proxy.tag,
+                    type: 'wireguard',
+                    server: proxy.server,
+                    port: proxy.server_port,
+                    ip: proxy.local_address ? proxy.local_address.split('/')[0] : '172.16.0.2',
+                    ipv6: proxy.ipv6,
+                    'private-key': proxy.private_key || '',
+                    'public-key': proxy.peer_public_key,
+                    reserved: proxy.reserved || [0, 0, 0],
+                    mtu: proxy.mtu || 1280,
+                    udp: true,
+                };
             default:
                 return proxy; // Return as-is if no specific conversion is defined
         }

@@ -128,6 +128,21 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
                     surgeProxy += `, udp-relay-mode=${proxy.udp_relay_mode}`;
                 }
                 break;
+            case 'wireguard':
+                surgeProxy = `${proxy.tag} = wireguard, ${proxy.server}, ${proxy.server_port}`;
+                if (proxy.private_key) {
+                    surgeProxy += `, private-key=${proxy.private_key}`;
+                }
+                if (proxy.peer_public_key) {
+                    surgeProxy += `, public-key=${proxy.peer_public_key}`;
+                }
+                if (proxy.dns) {
+                    surgeProxy += `, dns=${proxy.dns}`;
+                }
+                if (proxy.mtu) {
+                    surgeProxy += `, mtu=${proxy.mtu}`;
+                }
+                break;
             default:
                 surgeProxy = `# ${proxy.tag} - Unsupported proxy type: ${proxy.type}`;
         }
