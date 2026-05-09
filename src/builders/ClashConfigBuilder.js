@@ -48,11 +48,11 @@ function getClashUdpValue(proxy, defaultEnabled = true) {
 }
 
 export class ClashConfigBuilder extends BaseConfigBuilder {
-    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, includeAutoSelect = true, selectedProxies = []) {
+    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, includeAutoSelect = true, selectedProxies = [], customProxyNames = {}) {
         if (!baseConfig) {
             baseConfig = CLASH_CONFIG;
         }
-        super(inputString, baseConfig, lang, userAgent, groupByCountry, includeAutoSelect, selectedProxies);
+        super(inputString, baseConfig, lang, userAgent, groupByCountry, includeAutoSelect, selectedProxies, customProxyNames);
         this.selectedRules = selectedRules;
         this.customRules = customRules;
         this.countryGroupNames = [];
@@ -129,10 +129,13 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
     }
 
     convertProxy(proxy) {
+        // Determine proxy tag 确定节点名称
+        const proxyName = (proxy.tag && this.customProxyNames[proxy.tag]) ? this.customProxyNames[proxy.tag] : proxy.tag;
+
         switch (proxy.type) {
             case 'shadowsocks':
                 return {
-                    name: proxy.tag,
+                    name: proxyName,
                     type: 'ss',
                     server: proxy.server,
                     port: proxy.server_port,
@@ -144,7 +147,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                 };
             case 'vmess':
                 return {
-                    name: proxy.tag,
+                    name: proxyName,
                     type: proxy.type,
                     server: proxy.server,
                     port: proxy.server_port,
@@ -188,7 +191,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                 };
             case 'vless':
                 return {
-                    name: proxy.tag,
+                    name: proxyName,
                     type: proxy.type,
                     server: proxy.server,
                     port: proxy.server_port,
@@ -218,7 +221,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                 };
             case 'hysteria2':
                 return {
-                    name: proxy.tag,
+                    name: proxyName,
                     type: proxy.type,
                     server: proxy.server,
                     port: proxy.server_port,
@@ -238,7 +241,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                 };
             case 'trojan':
                 return {
-                    name: proxy.tag,
+                    name: proxyName,
                     type: proxy.type,
                     server: proxy.server,
                     port: proxy.server_port,
@@ -267,7 +270,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                 };
             case 'tuic':
                 return {
-                    name: proxy.tag,
+                    name: proxyName,
                     type: proxy.type,
                     server: proxy.server,
                     port: proxy.server_port,
@@ -285,7 +288,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                 };
             case 'anytls':
                 return {
-                    name: proxy.tag,
+                    name: proxyName,
                     type: 'anytls',
                     server: proxy.server,
                     port: proxy.server_port,
@@ -301,7 +304,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                 };
             case 'wireguard':
                 return {
-                    name: proxy.tag,
+                    name: proxyName,
                     type: 'wireguard',
                     server: proxy.server,
                     port: proxy.server_port,

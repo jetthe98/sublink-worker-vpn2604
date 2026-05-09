@@ -78,6 +78,15 @@ export function createApp(bindings = {}) {
             const selectedRules = parseSelectedRules(c.req.query('selectedRules'));
             const customRules = parseJsonArray(c.req.query('customRules'));
             const selectedProxies = parseJsonArray(c.req.query('selectedProxies'));
+            const customProxyNamesParam = c.req.query('customProxyNames');
+            let customProxyNames = {};
+            if (customProxyNamesParam) {
+                try {
+                    customProxyNames = JSON.parse(customProxyNamesParam);
+                } catch (e) {
+                    customProxyNames = {};
+                }
+            }
             const ua = c.req.query('ua') || getRequestHeader(c.req, 'User-Agent') || DEFAULT_USER_AGENT;
             const groupByCountry = parseBooleanFlag(c.req.query('group_by_country'));
             const includeAutoSelect = c.req.query('include_auto_select') !== 'false';
@@ -113,7 +122,8 @@ export function createApp(bindings = {}) {
                 externalUiDownloadUrl,
                 singboxConfigVersion,
                 includeAutoSelect,
-                selectedProxies
+                selectedProxies,
+                customProxyNames
             );
             await builder.build();
             const userinfo = builder.getSubscriptionUserinfo();
@@ -136,6 +146,15 @@ export function createApp(bindings = {}) {
             const selectedRules = parseSelectedRules(c.req.query('selectedRules'));
             const customRules = parseJsonArray(c.req.query('customRules'));
             const selectedProxies = parseJsonArray(c.req.query('selectedProxies'));
+            const customProxyNamesParam = c.req.query('customProxyNames');
+            let customProxyNames = {};
+            if (customProxyNamesParam) {
+                try {
+                    customProxyNames = JSON.parse(customProxyNamesParam);
+                } catch (e) {
+                    customProxyNames = {};
+                }
+            }
             const ua = c.req.query('ua') || getRequestHeader(c.req, 'User-Agent') || DEFAULT_USER_AGENT;
             const groupByCountry = parseBooleanFlag(c.req.query('group_by_country'));
             const includeAutoSelect = c.req.query('include_auto_select') !== 'false';
@@ -163,7 +182,8 @@ export function createApp(bindings = {}) {
                 externalController,
                 externalUiDownloadUrl,
                 includeAutoSelect,
-                selectedProxies
+                selectedProxies,
+                customProxyNames
             );
             await builder.build();
             const userinfo = builder.getSubscriptionUserinfo();
@@ -187,6 +207,15 @@ export function createApp(bindings = {}) {
             const selectedRules = parseSelectedRules(c.req.query('selectedRules'));
             const customRules = parseJsonArray(c.req.query('customRules'));
             const selectedProxies = parseJsonArray(c.req.query('selectedProxies'));
+            const customProxyNamesParam = c.req.query('customProxyNames');
+            let customProxyNames = {};
+            if (customProxyNamesParam) {
+                try {
+                    customProxyNames = JSON.parse(customProxyNamesParam);
+                } catch (e) {
+                    customProxyNames = {};
+                }
+            }
             const ua = c.req.query('ua') || getRequestHeader(c.req, 'User-Agent') || DEFAULT_USER_AGENT;
             const groupByCountry = parseBooleanFlag(c.req.query('group_by_country'));
             const includeAutoSelect = c.req.query('include_auto_select') !== 'false';
@@ -208,7 +237,8 @@ export function createApp(bindings = {}) {
                 ua,
                 groupByCountry,
                 includeAutoSelect,
-                selectedProxies
+                selectedProxies,
+                customProxyNames
             );
             const shortLinks = services.shortLinks;
             if (shortLinks) {
@@ -375,6 +405,15 @@ export function createApp(bindings = {}) {
                 const selectedRules = parseSelectedRules(params.get('selectedRules'));
                 const customRules = parseJsonArray(params.get('customRules'));
                 const selectedProxies = parseJsonArray(params.get('selectedProxies'));
+                const customProxyNamesParam = params.get('customProxyNames');
+                let customProxyNames = {};
+                if (customProxyNamesParam) {
+                    try {
+                        customProxyNames = JSON.parse(customProxyNamesParam);
+                    } catch (e) {
+                        customProxyNames = {};
+                    }
+                }
                 const ua = params.get('ua') || userAgent || DEFAULT_USER_AGENT;
                 const groupByCountry = parseBooleanFlag(params.get('group_by_country'));
                 const includeAutoSelect = params.get('include_auto_select') !== 'false';
@@ -396,7 +435,8 @@ export function createApp(bindings = {}) {
                     ua,
                     groupByCountry,
                     includeAutoSelect,
-                    selectedProxies
+                    selectedProxies,
+                    customProxyNames
                 );
                 builder.setSubscriptionUrl(c.req.url);
                 await builder.build();
@@ -524,7 +564,7 @@ export function createApp(bindings = {}) {
     // API v1: Preview config without saving
     app.post('/api/v1/preview', async (c) => {
         try {
-            const { input, configType, selectedRules, customRules, groupByCountry, includeAutoSelect, selectedProxies } = await c.req.json();
+            const { input, configType, selectedRules, customRules, groupByCountry, includeAutoSelect, selectedProxies, customProxyNames } = await c.req.json();
 
             if (!input) {
                 return c.json({ error: 'Missing input parameter' }, 400);
@@ -533,6 +573,7 @@ export function createApp(bindings = {}) {
             const selectedRulesParsed = parseSelectedRules(selectedRules);
             const customRulesParsed = parseJsonArray(customRules);
             const selectedProxiesParsed = parseJsonArray(selectedProxies);
+            const customProxyNamesParsed = customProxyNames || {};
             const lang = c.get('lang');
 
             let builder;
@@ -542,7 +583,7 @@ export function createApp(bindings = {}) {
                 case 'clash':
                     builder = new ClashConfigBuilder(
                         input, selectedRulesParsed, customRulesParsed, null,
-                        lang, null, groupByCountry, false, null, null, includeAutoSelect, selectedProxiesParsed
+                        lang, null, groupByCountry, false, null, null, includeAutoSelect, selectedProxiesParsed, customProxyNamesParsed
                     );
                     await builder.build();
                     previewContent = builder.formatConfig();
@@ -556,7 +597,7 @@ export function createApp(bindings = {}) {
                 case 'surge':
                     builder = new SurgeConfigBuilder(
                         input, selectedRulesParsed, customRulesParsed, null,
-                        lang, null, groupByCountry, includeAutoSelect, selectedProxiesParsed
+                        lang, null, groupByCountry, includeAutoSelect, selectedProxiesParsed, customProxyNamesParsed
                     );
                     await builder.build();
                     previewContent = builder.formatConfig();
@@ -571,7 +612,7 @@ export function createApp(bindings = {}) {
                 default:
                     builder = new SingboxConfigBuilder(
                         input, selectedRulesParsed, customRulesParsed, null,
-                        lang, null, groupByCountry, false, null, null, '1.12', includeAutoSelect, selectedProxiesParsed
+                        lang, null, groupByCountry, false, null, null, '1.12', includeAutoSelect, selectedProxiesParsed, customProxyNamesParsed
                     );
                     await builder.build();
                     previewContent = JSON.stringify(builder.config, null, 2);

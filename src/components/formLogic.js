@@ -88,6 +88,7 @@ export const formLogicFn = (t) => {
             parsingProxies: false,
             proxyGroups: [],
             customProxyGroups: [],
+            customProxyNames: {}, // 存储自定义节点名称: { originalName: customName }
             subconverterCopied: false,
             groupByCountry: false,
             includeAutoSelect: true,
@@ -168,6 +169,16 @@ export const formLogicFn = (t) => {
                     }
                 }
 
+                // Load custom proxy names
+                const savedNames = localStorage.getItem('customProxyNames');
+                if (savedNames) {
+                    try {
+                        this.customProxyNames = JSON.parse(savedNames);
+                    } catch (e) {
+                        this.customProxyNames = {};
+                    }
+                }
+
                 // Load accordion states
                 const savedAccordion = localStorage.getItem('accordionSections');
                 if (savedAccordion) {
@@ -205,6 +216,7 @@ export const formLogicFn = (t) => {
                 this.$watch('accordionSections', val => localStorage.setItem('accordionSections', JSON.stringify(val)), { deep: true });
                 this.$watch('selectedProxyNames', val => localStorage.setItem('selectedProxyNames', JSON.stringify(val)), { deep: true });
                 this.$watch('customProxyGroups', val => localStorage.setItem('customProxyGroups', JSON.stringify(val)), { deep: true });
+                this.$watch('customProxyNames', val => localStorage.setItem('customProxyNames', JSON.stringify(val)), { deep: true });
             },
 
             toggleAccordion(section) {
@@ -411,6 +423,11 @@ export const formLogicFn = (t) => {
                         params.append('selectedProxies', JSON.stringify(this.selectedProxyNames));
                     }
 
+                    // Add custom proxy names if any
+                    if (Object.keys(this.customProxyNames).length > 0) {
+                        params.append('customProxyNames', JSON.stringify(this.customProxyNames));
+                    }
+
                     if (this.groupByCountry) params.append('group_by_country', 'true');
                     if (!this.includeAutoSelect) params.append('include_auto_select', 'false');
                     if (this.enableClashUI) params.append('enable_clash_ui', 'true');
@@ -553,6 +570,30 @@ export const formLogicFn = (t) => {
                 if (group) {
                     this.selectedProxyNames = [...group.proxies];
                 }
+            },
+
+            // 获取显示的节点名称（优先使用自定义名称）
+            getProxyDisplayName(proxyName) {
+                return this.customProxyNames[proxyName] || proxyName;
+            },
+
+            // 设置自定义节点名称
+            setCustomProxyName(originalName, customName) {
+                if (!customName || customName.trim() === '') {
+                    delete this.customProxyNames[originalName];
+                } else {
+                    this.customProxyNames[originalName] = customName.trim();
+                }
+            },
+
+            // 重置自定义节点名称
+            resetProxyName(originalName) {
+                delete this.customProxyNames[originalName];
+            },
+
+            // 检查是否有自定义名称
+            hasCustomName(originalName) {
+                return !!this.customProxyNames[originalName];
             },
 
             async shortenLinks() {

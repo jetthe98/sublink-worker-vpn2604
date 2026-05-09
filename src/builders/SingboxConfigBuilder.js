@@ -7,9 +7,9 @@ import { buildSelectorMembers as buildSelectorMemberList, buildNodeSelectMembers
 import { normalizeGroupName } from './helpers/groupNameUtils.js';
 
 export class SingboxConfigBuilder extends BaseConfigBuilder {
-    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, singboxVersion = '1.12', includeAutoSelect = true, selectedProxies = []) {
+    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, singboxVersion = '1.12', includeAutoSelect = true, selectedProxies = [], customProxyNames = {}) {
         const resolvedBaseConfig = baseConfig ?? SING_BOX_CONFIG;
-        super(inputString, resolvedBaseConfig, lang, userAgent, groupByCountry, includeAutoSelect, selectedProxies);
+        super(inputString, resolvedBaseConfig, lang, userAgent, groupByCountry, includeAutoSelect, selectedProxies, customProxyNames);
 
         this.selectedRules = selectedRules;
         this.customRules = customRules;
@@ -97,6 +97,11 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
     convertProxy(proxy) {
         // Create a shallow copy to avoid mutating the original
         const sanitized = { ...proxy };
+
+        // Apply custom proxy name if available
+        if (sanitized.tag && this.customProxyNames[sanitized.tag]) {
+            sanitized.tag = this.customProxyNames[sanitized.tag];
+        }
 
         // Remove Clash-specific fields that are not valid in sing-box outbound configuration
         // In sing-box, UDP is controlled by 'network' field (defaults to both tcp and udp)
