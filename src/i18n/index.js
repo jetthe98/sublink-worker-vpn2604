@@ -172,7 +172,14 @@ export const translations = {
     clickParseToLoad: '点击解析按钮加载节点',
     selectedCount: '已选择 {count}/{total}',
     selectAll: '全选',
-    deselectAll: '取消全选'
+    deselectAll: '取消全选',
+    // Config Preview
+    configPreview: '配置预览',
+    preview: '预览',
+    copy: '复制',
+    close: '关闭',
+    nodes: '个节点',
+    rules: '条规则'
   },
   'en-US': {
     enableClashUI: 'Enable Clash API',
@@ -342,7 +349,14 @@ export const translations = {
     clickParseToLoad: 'Click parse button to load nodes',
     selectedCount: 'Selected {count}/{total}',
     selectAll: 'Select All',
-    deselectAll: 'Deselect All'
+    deselectAll: 'Deselect All',
+    // Config Preview
+    configPreview: 'Config Preview',
+    preview: 'Preview',
+    copy: 'Copy',
+    close: 'Close',
+    nodes: 'nodes',
+    rules: 'rules'
   },
   'fa': {
     missingInput: 'پارامتر ورودی وجود ندارد',
@@ -506,7 +520,14 @@ export const translations = {
     clickParseToLoad: 'برای بارگذاری نودها روی دکمه تجزیه کلیک کنید',
     selectedCount: '{count}/{total} انتخاب شده',
     selectAll: 'انتخاب همه',
-    deselectAll: 'لغو انتخاب همه'
+    deselectAll: 'لغو انتخاب همه',
+    // Config Preview
+    configPreview: 'پیش‌نمایش پیکربندی',
+    preview: 'پیش‌نمایش',
+    copy: 'کپی',
+    close: 'بستن',
+    nodes: 'نود',
+    rules: 'قانون'
   },
   'ru': {
     missingInput: 'Отсутствует входной параметр',
@@ -670,7 +691,14 @@ export const translations = {
     clickParseToLoad: 'Нажмите кнопку разбора для загрузки узлов',
     selectedCount: 'Выбрано {count}/{total}',
     selectAll: 'Выбрать все',
-    deselectAll: 'Снять выбор'
+    deselectAll: 'Снять выбор',
+    // Config Preview
+    configPreview: 'Предпросмотр конфига',
+    preview: 'Предпросмотр',
+    copy: 'Копировать',
+    close: 'Закрыть',
+    nodes: 'узлов',
+    rules: 'правил'
   }
 };
 

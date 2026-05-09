@@ -1,6 +1,7 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource hono/jsx */
 import { PREDEFINED_RULE_SETS, UNIFIED_RULES } from '../config/index.js';
+import { ConfigPreview } from './ConfigPreview.jsx';
 import { CustomRules } from './CustomRules.jsx';
 import { NodeSelector } from './NodeSelector.jsx';
 import { TextareaWithActions } from './TextareaWithActions.jsx';
@@ -160,6 +161,9 @@ export const Form = (props) => {
 
   {/* Node Selector */ }
   <NodeSelector t={t} />
+
+  {/* Config Preview */ }
+  <ConfigPreview t={t} />
 
   {/* Custom Rules Component */ }
   <CustomRules t={t} />

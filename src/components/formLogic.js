@@ -86,6 +86,8 @@ export const formLogicFn = (t) => {
             parsedProxies: [],
             selectedProxyNames: [],
             parsingProxies: false,
+            proxyGroups: [],
+            customProxyGroups: [],
             subconverterCopied: false,
             groupByCountry: false,
             includeAutoSelect: true,
@@ -156,6 +158,16 @@ export const formLogicFn = (t) => {
                     }
                 }
 
+                // Load custom proxy groups
+                const savedGroups = localStorage.getItem('customProxyGroups');
+                if (savedGroups) {
+                    try {
+                        this.customProxyGroups = JSON.parse(savedGroups);
+                    } catch (e) {
+                        this.customProxyGroups = [];
+                    }
+                }
+
                 // Load accordion states
                 const savedAccordion = localStorage.getItem('accordionSections');
                 if (savedAccordion) {
@@ -192,6 +204,7 @@ export const formLogicFn = (t) => {
                 this.$watch('customShortCode', val => localStorage.setItem('customShortCode', val));
                 this.$watch('accordionSections', val => localStorage.setItem('accordionSections', JSON.stringify(val)), { deep: true });
                 this.$watch('selectedProxyNames', val => localStorage.setItem('selectedProxyNames', JSON.stringify(val)), { deep: true });
+                this.$watch('customProxyGroups', val => localStorage.setItem('customProxyGroups', JSON.stringify(val)), { deep: true });
             },
 
             toggleAccordion(section) {
@@ -494,6 +507,52 @@ export const formLogicFn = (t) => {
 
             isProxySelected(name) {
                 return this.selectedProxyNames.includes(name);
+            },
+
+            createProxyGroup() {
+                const newGroup = {
+                    id: Date.now().toString(),
+                    name: '',
+                    proxies: [],
+                    expanded: true
+                };
+                this.customProxyGroups.push(newGroup);
+            },
+
+            deleteProxyGroup(groupId) {
+                this.customProxyGroups = this.customProxyGroups.filter(g => g.id !== groupId);
+            },
+
+            addToProxyGroup(groupId, proxyName) {
+                const group = this.customProxyGroups.find(g => g.id === groupId);
+                if (group && !group.proxies.includes(proxyName)) {
+                    group.proxies.push(proxyName);
+                }
+            },
+
+            removeFromProxyGroup(groupId, proxyName) {
+                const group = this.customProxyGroups.find(g => g.id === groupId);
+                if (group) {
+                    group.proxies = group.proxies.filter(p => p !== proxyName);
+                }
+            },
+
+            addSelectedToGroup(groupId) {
+                const group = this.customProxyGroups.find(g => g.id === groupId);
+                if (group) {
+                    this.selectedProxyNames.forEach(name => {
+                        if (!group.proxies.includes(name)) {
+                            group.proxies.push(name);
+                        }
+                    });
+                }
+            },
+
+            selectGroupProxies(groupId) {
+                const group = this.customProxyGroups.find(g => g.id === groupId);
+                if (group) {
+                    this.selectedProxyNames = [...group.proxies];
+                }
             },
 
             async shortenLinks() {

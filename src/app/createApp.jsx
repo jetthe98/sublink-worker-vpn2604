@@ -521,6 +521,72 @@ export function createApp(bindings = {}) {
         }
     });
 
+    // API v1: Preview config without saving
+    app.post('/api/v1/preview', async (c) => {
+        try {
+            const { input, configType, selectedRules, customRules, groupByCountry, includeAutoSelect, selectedProxies } = await c.req.json();
+
+            if (!input) {
+                return c.json({ error: 'Missing input parameter' }, 400);
+            }
+
+            const selectedRulesParsed = parseSelectedRules(selectedRules);
+            const customRulesParsed = parseJsonArray(customRules);
+            const selectedProxiesParsed = parseJsonArray(selectedProxies);
+            const lang = c.get('lang');
+
+            let builder;
+            let previewContent;
+
+            switch (configType) {
+                case 'clash':
+                    builder = new ClashConfigBuilder(
+                        input, selectedRulesParsed, customRulesParsed, null,
+                        lang, null, groupByCountry, false, null, null, includeAutoSelect, selectedProxiesParsed
+                    );
+                    await builder.build();
+                    previewContent = builder.formatConfig();
+                    return c.json({
+                        content: previewContent,
+                        contentType: 'text/yaml',
+                        proxyCount: builder.config?.proxies?.length || 0,
+                        ruleCount: builder.config?.rules?.length || 0
+                    });
+
+                case 'surge':
+                    builder = new SurgeConfigBuilder(
+                        input, selectedRulesParsed, customRulesParsed, null,
+                        lang, null, groupByCountry, includeAutoSelect, selectedProxiesParsed
+                    );
+                    await builder.build();
+                    previewContent = builder.formatConfig();
+                    return c.json({
+                        content: previewContent,
+                        contentType: 'text/plain',
+                        proxyCount: builder.proxies?.length || 0,
+                        ruleCount: builder.rules?.length || 0
+                    });
+
+                case 'singbox':
+                default:
+                    builder = new SingboxConfigBuilder(
+                        input, selectedRulesParsed, customRulesParsed, null,
+                        lang, null, groupByCountry, false, null, null, '1.12', includeAutoSelect, selectedProxiesParsed
+                    );
+                    await builder.build();
+                    previewContent = JSON.stringify(builder.config, null, 2);
+                    return c.json({
+                        content: previewContent,
+                        contentType: 'application/json',
+                        proxyCount: builder.config?.outbounds?.length || 0,
+                        ruleCount: builder.config?.route?.rules?.length || 0
+                    });
+            }
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
     // API v1: Test proxy latency
     app.get('/api/v1/ping', async (c) => {
         try {

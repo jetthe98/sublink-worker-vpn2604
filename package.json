@@ -9,12 +9,15 @@
     "dev": "wrangler dev",
     "start": "wrangler dev",
     "test": "vitest run",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
     "setup-kv": "node scripts/setup-kv.cjs",
     "build:node": "node_modules/.bin/esbuild src/platforms/node-server.js --bundle --platform=node --target=node18 --format=cjs --outfile=dist/node-server.cjs",
     "dev:node": "npm run build:node && node dist/node-server.cjs"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.10.11",
+    "@playwright/test": "^1.59.1",
     "esbuild": "^0.27.0",
     "playwright": "^1.59.1",
     "vitest": "^3.2.4",
