@@ -374,6 +374,7 @@ export function createApp(bindings = {}) {
 
                 const selectedRules = parseSelectedRules(params.get('selectedRules'));
                 const customRules = parseJsonArray(params.get('customRules'));
+                const selectedProxies = parseJsonArray(params.get('selectedProxies'));
                 const ua = params.get('ua') || userAgent || DEFAULT_USER_AGENT;
                 const groupByCountry = parseBooleanFlag(params.get('group_by_country'));
                 const includeAutoSelect = params.get('include_auto_select') !== 'false';
@@ -394,7 +395,8 @@ export function createApp(bindings = {}) {
                     lang,
                     ua,
                     groupByCountry,
-                    includeAutoSelect
+                    includeAutoSelect,
+                    selectedProxies
                 );
                 builder.setSubscriptionUrl(c.req.url);
                 await builder.build();
