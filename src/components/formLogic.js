@@ -78,10 +78,14 @@ export const formLogicFn = (t) => {
                 customRules: false, // 自定义规则
                 general: false,     // 通用设置
                 baseConfig: false,  // 基础配置
-                ua: false          // User Agent
+                ua: false,          // User Agent
+                proxySelector: false // 节点选择器
             },
             selectedRules: [],
             selectedPredefinedRule: 'balanced',
+            parsedProxies: [],
+            selectedProxyNames: [],
+            parsingProxies: false,
             subconverterCopied: false,
             groupByCountry: false,
             includeAutoSelect: true,
@@ -142,6 +146,16 @@ export const formLogicFn = (t) => {
                 const initialUrlParams = new URLSearchParams(window.location.search);
                 this.currentConfigId = initialUrlParams.get('configId') || '';
 
+                // Load selected proxy names
+                const savedProxyNames = localStorage.getItem('selectedProxyNames');
+                if (savedProxyNames) {
+                    try {
+                        this.selectedProxyNames = JSON.parse(savedProxyNames);
+                    } catch (e) {
+                        this.selectedProxyNames = [];
+                    }
+                }
+
                 // Load accordion states
                 const savedAccordion = localStorage.getItem('accordionSections');
                 if (savedAccordion) {
@@ -177,6 +191,7 @@ export const formLogicFn = (t) => {
                 });
                 this.$watch('customShortCode', val => localStorage.setItem('customShortCode', val));
                 this.$watch('accordionSections', val => localStorage.setItem('accordionSections', JSON.stringify(val)), { deep: true });
+                this.$watch('selectedProxyNames', val => localStorage.setItem('selectedProxyNames', JSON.stringify(val)), { deep: true });
             },
 
             toggleAccordion(section) {
@@ -378,6 +393,11 @@ export const formLogicFn = (t) => {
                     params.append('selectedRules', JSON.stringify(this.selectedRules));
                     params.append('customRules', JSON.stringify(customRules));
 
+                    // Add selected proxy names if any
+                    if (this.selectedProxyNames.length > 0) {
+                        params.append('selectedProxies', JSON.stringify(this.selectedProxyNames));
+                    }
+
                     if (this.groupByCountry) params.append('group_by_country', 'true');
                     if (!this.includeAutoSelect) params.append('include_auto_select', 'false');
                     if (this.enableClashUI) params.append('enable_clash_ui', 'true');
@@ -414,6 +434,66 @@ export const formLogicFn = (t) => {
                 } finally {
                     this.loading = false;
                 }
+            },
+
+            async parseProxies() {
+                if (!this.input || !this.input.trim()) {
+                    this.parsedProxies = [];
+                    return;
+                }
+
+                this.parsingProxies = true;
+                try {
+                    const response = await fetch('/api/v1/proxies', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ input: this.input })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to parse proxies');
+                    }
+
+                    const data = await response.json();
+                    this.parsedProxies = data.proxies || [];
+
+                    // Auto-select proxies that were previously selected
+                    if (this.parsedProxies.length > 0 && this.selectedProxyNames.length > 0) {
+                        const currentProxyNames = this.parsedProxies.map(p => p.name);
+                        this.selectedProxyNames = this.selectedProxyNames.filter(name => 
+                            currentProxyNames.includes(name)
+                        );
+                    }
+
+                } catch (error) {
+                    console.error('Error parsing proxies:', error);
+                    this.parsedProxies = [];
+                } finally {
+                    this.parsingProxies = false;
+                }
+            },
+
+            selectAllProxies() {
+                this.selectedProxyNames = [...this.parsedProxies.map(p => p.name)];
+            },
+
+            deselectAllProxies() {
+                this.selectedProxyNames = [];
+            },
+
+            toggleProxySelection(name) {
+                const index = this.selectedProxyNames.indexOf(name);
+                if (index === -1) {
+                    this.selectedProxyNames.push(name);
+                } else {
+                    this.selectedProxyNames.splice(index, 1);
+                }
+            },
+
+            isProxySelected(name) {
+                return this.selectedProxyNames.includes(name);
             },
 
             async shortenLinks() {

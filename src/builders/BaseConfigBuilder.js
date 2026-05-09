@@ -4,11 +4,12 @@ import { createTranslator } from '../i18n/index.js';
 import { generateRules, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
 
 export class BaseConfigBuilder {
-    constructor(inputString, baseConfig, lang, userAgent, groupByCountry = false, includeAutoSelect = true) {
+    constructor(inputString, baseConfig, lang, userAgent, groupByCountry = false, includeAutoSelect = true, selectedProxies = []) {
         this.inputString = inputString;
         this.config = deepCopy(baseConfig);
         this.customRules = [];
         this.selectedRules = [];
+        this.selectedProxies = selectedProxies;
         this.t = createTranslator(lang);
         this.userAgent = userAgent;
         this.appliedOverrideKeys = new Set();
@@ -358,13 +359,16 @@ export class BaseConfigBuilder {
     }
 
     addCustomItems(customItems) {
-        const validItems = customItems.filter(item => item != null);
+        let validItems = customItems.filter(item => item != null && item?.tag);
+        
+        if (this.selectedProxies && this.selectedProxies.length > 0) {
+            validItems = validItems.filter(item => this.selectedProxies.includes(item.tag));
+        }
+        
         validItems.forEach(item => {
-            if (item?.tag) {
-                const convertedProxy = this.convertProxy(item);
-                if (convertedProxy) {
-                    this.addProxyToConfig(convertedProxy);
-                }
+            const convertedProxy = this.convertProxy(item);
+            if (convertedProxy) {
+                this.addProxyToConfig(convertedProxy);
             }
         });
     }

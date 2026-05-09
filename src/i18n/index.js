@@ -164,7 +164,15 @@ export const translations = {
     newVersionAvailable: '发现新版本',
     viewRelease: '查看更新',
     updateGuide: '更新指南',
-    later: '稍后'
+    later: '稍后',
+    // Node Selector
+    nodeSelector: '节点选择',
+    parseNodes: '解析节点',
+    noNodesParsed: '暂无解析的节点',
+    clickParseToLoad: '点击解析按钮加载节点',
+    selectedCount: '已选择 {count}/{total}',
+    selectAll: '全选',
+    deselectAll: '取消全选'
   },
   'en-US': {
     enableClashUI: 'Enable Clash API',
@@ -326,7 +334,15 @@ export const translations = {
     newVersionAvailable: 'New Version Available',
     viewRelease: 'View Release',
     updateGuide: 'Update Guide',
-    later: 'Later'
+    later: 'Later',
+    // Node Selector
+    nodeSelector: 'Node Selector',
+    parseNodes: 'Parse Nodes',
+    noNodesParsed: 'No nodes parsed yet',
+    clickParseToLoad: 'Click parse button to load nodes',
+    selectedCount: 'Selected {count}/{total}',
+    selectAll: 'Select All',
+    deselectAll: 'Deselect All'
   },
   'fa': {
     missingInput: 'پارامتر ورودی وجود ندارد',
@@ -482,7 +498,15 @@ export const translations = {
     newVersionAvailable: 'نسخه جدید موجود است',
     viewRelease: 'مشاهده انتشار',
     updateGuide: 'راهنمای به‌روزرسانی',
-    later: 'بعداً'
+    later: 'بعداً',
+    // Node Selector
+    nodeSelector: 'انتخاب نود',
+    parseNodes: 'تجزیه نودها',
+    noNodesParsed: 'هیچ نودی تجزیه نشده است',
+    clickParseToLoad: 'برای بارگذاری نودها روی دکمه تجزیه کلیک کنید',
+    selectedCount: '{count}/{total} انتخاب شده',
+    selectAll: 'انتخاب همه',
+    deselectAll: 'لغو انتخاب همه'
   },
   'ru': {
     missingInput: 'Отсутствует входной параметр',
@@ -638,7 +662,15 @@ export const translations = {
     newVersionAvailable: 'Доступна новая версия',
     viewRelease: 'Посмотреть релиз',
     updateGuide: 'Руководство по обновлению',
-    later: 'Позже'
+    later: 'Позже',
+    // Node Selector
+    nodeSelector: 'Выбор узлов',
+    parseNodes: 'Разобрать узлы',
+    noNodesParsed: 'Узлы не разобраны',
+    clickParseToLoad: 'Нажмите кнопку разбора для загрузки узлов',
+    selectedCount: 'Выбрано {count}/{total}',
+    selectAll: 'Выбрать все',
+    deselectAll: 'Снять выбор'
   }
 };
 
@@ -659,7 +691,7 @@ export function resolveLanguage(lang) {
 export function createTranslator(lang) {
   const currentLang = resolveLanguage(lang);
 
-  return function t(key) {
+  return function t(key, params = {}) {
     const keys = key.split('.');
     let value = translations[currentLang];
 
@@ -672,6 +704,13 @@ export function createTranslator(lang) {
         return key;
       }
     }
+
+    if (typeof value === 'string') {
+      for (const [paramKey, paramValue] of Object.entries(params)) {
+        value = value.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), paramValue);
+      }
+    }
+
     return value;
   };
 }

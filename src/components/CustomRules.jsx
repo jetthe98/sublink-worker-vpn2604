@@ -256,12 +256,28 @@ export const CustomRules = (props) => {
             jsonValid: false,
             
             init() {
-              // Watch for changes in rules to update JSON content
+              // Load saved rules from localStorage
+              const savedRules = localStorage.getItem('customRules');
+              if (savedRules) {
+                try {
+                  const parsed = JSON.parse(savedRules);
+                  if (Array.isArray(parsed)) {
+                    this.rules = parsed;
+                    this.jsonContent = JSON.stringify(parsed, null, 2);
+                  }
+                } catch (e) {
+                  console.warn('Failed to load saved custom rules:', e);
+                }
+              }
+
+              // Watch for changes in rules to update JSON content and save to localStorage
               this.$watch('rules', (value) => {
                 if (this.mode === 'form') {
                   this.jsonContent = JSON.stringify(value, null, 2);
                 }
-              });
+                // Save to localStorage
+                localStorage.setItem('customRules', JSON.stringify(value));
+              }, { deep: true });
 
               // Watch for changes in JSON content to update rules
               this.$watch('jsonContent', (value) => {
@@ -287,7 +303,7 @@ export const CustomRules = (props) => {
                 if (event.detail && Array.isArray(event.detail.rules)) {
                   this.rules = event.detail.rules;
                   this.jsonContent = JSON.stringify(event.detail.rules, null, 2);
-                  this.mode = 'json'; // Switch to JSON mode to show imported rules
+                  this.mode = 'json';
                 }
               });
             },
@@ -302,8 +318,7 @@ export const CustomRules = (props) => {
                 protocol: '',
                 site: '',
                 ip: '',
-                outbound: '' // Will be set to name by default in backend or needs explicit field? 
-                             // In original logic, outbound name IS the rule name for custom rules.
+                outbound: ''
               });
             },
             
@@ -320,6 +335,7 @@ export const CustomRules = (props) => {
               setTimeout(() => {
                 this.rules = [];
                 this.jsonContent = '[]';
+                localStorage.removeItem('customRules');
               }, 200);
             },
             

@@ -2,6 +2,7 @@
 /** @jsxImportSource hono/jsx */
 import { PREDEFINED_RULE_SETS, UNIFIED_RULES } from '../config/index.js';
 import { CustomRules } from './CustomRules.jsx';
+import { NodeSelector } from './NodeSelector.jsx';
 import { TextareaWithActions } from './TextareaWithActions.jsx';
 import { ValidatedTextarea } from './ValidatedTextarea.jsx';
 import { formLogicFn } from './formLogic.js';
@@ -156,6 +157,9 @@ export const Form = (props) => {
   </div>
 
           </div>
+
+  {/* Node Selector */ }
+  <NodeSelector t={t} />
 
   {/* Custom Rules Component */ }
   <CustomRules t={t} />
