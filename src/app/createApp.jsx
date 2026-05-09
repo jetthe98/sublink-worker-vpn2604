@@ -613,6 +613,200 @@ export function createApp(bindings = {}) {
         }
     });
 
+    // User Preferences API
+    app.get('/api/v1/preferences', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const { PreferencesService } = await import('../services/preferencesService.js');
+            const prefs = new PreferencesService(runtime.kv, runtime.config);
+            const allPrefs = await prefs.getAll(userId);
+            return c.json(allPrefs);
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.put('/api/v1/preferences/:key', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const key = c.req.param('key');
+            const value = await c.req.json();
+            const { PreferencesService } = await import('../services/preferencesService.js');
+            const prefs = new PreferencesService(runtime.kv, runtime.config);
+            await prefs.set(userId, key, value);
+            return c.json({ success: true, key, value });
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    // Subscription Cache API
+    app.get('/api/v1/cache/stats', async (c) => {
+        try {
+            const { SubscriptionCacheService } = await import('../services/subscriptionCacheService.js');
+            const cache = new SubscriptionCacheService(runtime.kv, runtime.config);
+            const stats = await cache.getStats();
+            return c.json(stats);
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.post('/api/v1/cache/invalidate', async (c) => {
+        try {
+            const { url } = await c.req.json();
+            if (!url) {
+                return c.json({ error: 'Missing url parameter' }, 400);
+            }
+            const { SubscriptionCacheService } = await import('../services/subscriptionCacheService.js');
+            const cache = new SubscriptionCacheService(runtime.kv, runtime.config);
+            const result = await cache.invalidate(url);
+            return c.json({ success: result });
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.post('/api/v1/cache/clear', async (c) => {
+        try {
+            const { SubscriptionCacheService } = await import('../services/subscriptionCacheService.js');
+            const cache = new SubscriptionCacheService(runtime.kv, runtime.config);
+            const result = await cache.clear();
+            return c.json(result);
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    // Usage Stats API
+    app.get('/api/v1/stats', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const { UsageStatsService } = await import('../services/usageStatsService.js');
+            const stats = new UsageStatsService(runtime.kv, runtime.config);
+            const data = await stats.getStats(userId);
+            return c.json(data);
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.get('/api/v1/stats/nodes', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const limit = parseInt(c.req.query('limit') || '10', 10);
+            const { UsageStatsService } = await import('../services/usageStatsService.js');
+            const stats = new UsageStatsService(runtime.kv, runtime.config);
+            const nodes = await stats.getMostUsedNodes(userId, limit);
+            return c.json({ nodes });
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.delete('/api/v1/stats', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const { UsageStatsService } = await import('../services/usageStatsService.js');
+            const stats = new UsageStatsService(runtime.kv, runtime.config);
+            const result = await stats.clearStats(userId);
+            return c.json(result);
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    // Favorite Nodes API
+    app.get('/api/v1/favorites', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const { FavoriteNodesService } = await import('../services/favoriteNodesService.js');
+            const favorites = new FavoriteNodesService(runtime.kv, runtime.config);
+            const list = await favorites.getFavorites(userId);
+            return c.json({ favorites: list });
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.post('/api/v1/favorites', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const node = await c.req.json();
+            const { FavoriteNodesService } = await import('../services/favoriteNodesService.js');
+            const favorites = new FavoriteNodesService(runtime.kv, runtime.config);
+            const result = await favorites.addFavorite(userId, node);
+            return c.json(result);
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.delete('/api/v1/favorites/:id', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const nodeId = c.req.param('id');
+            const { FavoriteNodesService } = await import('../services/favoriteNodesService.js');
+            const favorites = new FavoriteNodesService(runtime.kv, runtime.config);
+            const result = await favorites.removeFavorite(userId, nodeId);
+            return c.json(result);
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    // Recent History API
+    app.get('/api/v1/history', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const limit = parseInt(c.req.query('limit') || '10', 10);
+            const { RecentHistoryService } = await import('../services/recentHistoryService.js');
+            const history = new RecentHistoryService(runtime.kv, runtime.config);
+            const list = await history.getRecent(userId, limit);
+            return c.json({ history: list });
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.post('/api/v1/history', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const item = await c.req.json();
+            const { RecentHistoryService } = await import('../services/recentHistoryService.js');
+            const history = new RecentHistoryService(runtime.kv, runtime.config);
+            const entry = await history.add(userId, item);
+            return c.json({ success: true, entry });
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.delete('/api/v1/history/:id', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const entryId = c.req.param('id');
+            const { RecentHistoryService } = await import('../services/recentHistoryService.js');
+            const history = new RecentHistoryService(runtime.kv, runtime.config);
+            const result = await history.remove(userId, entryId);
+            return c.json(result);
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
+    app.delete('/api/v1/history', async (c) => {
+        try {
+            const userId = c.req.query('userId') || 'default';
+            const { RecentHistoryService } = await import('../services/recentHistoryService.js');
+            const history = new RecentHistoryService(runtime.kv, runtime.config);
+            const result = await history.clear(userId);
+            return c.json(result);
+        } catch (error) {
+            return handleError(c, error, runtime.logger);
+        }
+    });
+
     app.get('/favicon.ico', async (c) => {
         if (!runtime.assetFetcher) {
             return c.notFound();
