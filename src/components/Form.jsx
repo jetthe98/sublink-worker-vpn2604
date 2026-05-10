@@ -4,14 +4,9 @@ import { PREDEFINED_RULE_SETS, UNIFIED_RULES } from '../config/index.js';
 import { ConfigPreview } from './ConfigPreview.jsx';
 import { CustomRules } from './CustomRules.jsx';
 import { NodeSelector } from './NodeSelector.jsx';
-import { SubscriptionManager } from './SubscriptionManager.jsx';
 import { TextareaWithActions } from './TextareaWithActions.jsx';
 import { ValidatedTextarea } from './ValidatedTextarea.jsx';
 import { formLogicFn } from './formLogic.js';
-import { SubscriptionInfo } from './SubscriptionInfo.jsx';
-import { ImportExportConfig } from './ImportExportConfig.jsx';
-import { OperationHistory } from './OperationHistory.jsx';
-import { BatchRename } from './BatchRename.jsx';
 
 const LINK_FIELDS = [
   { key: 'xray', labelKey: 'xrayLink' },
@@ -163,21 +158,6 @@ export const Form = (props) => {
   </div>
 
           </div>
-
-  {/* Subscription Manager */}
-  <SubscriptionManager t={t} />
-
-  {/* Subscription Info */}
-  <SubscriptionInfo t={t} />
-
-  {/* Import Export Config */}
-  <ImportExportConfig t={t} />
-
-  {/* Batch Rename */}
-  <BatchRename t={t} />
-
-  {/* Operation History */}
-  <OperationHistory t={t} />
 
   {/* Node Selector */ }
   <NodeSelector t={t} />
