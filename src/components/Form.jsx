@@ -8,6 +8,10 @@ import { SubscriptionManager } from './SubscriptionManager.jsx';
 import { TextareaWithActions } from './TextareaWithActions.jsx';
 import { ValidatedTextarea } from './ValidatedTextarea.jsx';
 import { formLogicFn } from './formLogic.js';
+import { SubscriptionInfo } from './SubscriptionInfo.jsx';
+import { ImportExportConfig } from './ImportExportConfig.jsx';
+import { OperationHistory } from './OperationHistory.jsx';
+import { BatchRename } from './BatchRename.jsx';
 
 const LINK_FIELDS = [
   { key: 'xray', labelKey: 'xrayLink' },
@@ -162,6 +166,18 @@ export const Form = (props) => {
 
   {/* Subscription Manager */}
   <SubscriptionManager t={t} />
+
+  {/* Subscription Info */}
+  <SubscriptionInfo t={t} />
+
+  {/* Import Export Config */}
+  <ImportExportConfig t={t} />
+
+  {/* Batch Rename */}
+  <BatchRename t={t} />
+
+  {/* Operation History */}
+  <OperationHistory t={t} />
 
   {/* Node Selector */ }
   <NodeSelector t={t} />
