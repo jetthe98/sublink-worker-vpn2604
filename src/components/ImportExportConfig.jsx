@@ -43,7 +43,7 @@ export const ImportExportConfig = (props) => {
                     if (!name) return;
 
                     const config = {
-                        input: input,
+                        input: this.input,
                         customProxyNames: customProxyNames,
                         selectedProxyNames: selectedProxyNames,
                         customProxyGroups: customProxyGroups,
@@ -66,7 +66,7 @@ export const ImportExportConfig = (props) => {
                         name: name,
                         exportedAt: new Date().toISOString(),
                         data: {
-                            input: input,
+                            input: this.input,
                             customProxyNames: JSON.parse(localStorage.getItem('customProxyNames') || '{}'),
                             selectedProxyNames: selectedProxyNames,
                             customProxyGroups: customProxyGroups,
@@ -128,11 +128,11 @@ export const ImportExportConfig = (props) => {
                             : this.importContent;
 
                         if (config.input) {
-                            input = config.input;
+                            this.input = config.input;
                         } else if (config.config) {
-                            input = typeof config.config === 'string' ? config.config : JSON.stringify(config.config);
+                            this.input = typeof config.config === 'string' ? config.config : JSON.stringify(config.config);
                         } else {
-                            input = typeof config === 'string' ? config : JSON.stringify(config);
+                            this.input = typeof config === 'string' ? config : JSON.stringify(config);
                         }
 
                         if (config.customProxyNames) {
@@ -172,9 +172,9 @@ export const ImportExportConfig = (props) => {
                         const data = config.data || config.config || config;
 
                         if (data.input) {
-                            input = data.input;
+                            this.input = data.input;
                         } else if (typeof data === 'string') {
-                            input = data;
+                            this.input = data;
                         }
 
                         if (data.customProxyNames) {

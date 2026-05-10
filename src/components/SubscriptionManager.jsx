@@ -28,13 +28,13 @@ export const SubscriptionManager = (props) => {
                 },
 
                 saveCurrent() {
-                    if (!input || !input.trim()) return;
+                    if (!this.input || !this.input.trim()) return;
 
                     const name = this.newSubscriptionName.trim() || this.generateDefaultName();
                     const sub = {
                         id: Date.now().toString(),
                         name: name,
-                        config: input,
+                        config: this.input,
                         createdAt: Date.now(),
                         updatedAt: Date.now()
                     };
@@ -55,7 +55,7 @@ export const SubscriptionManager = (props) => {
                 loadSubscription(id) {
                     const sub = this.subscriptions.find(s => s.id === id);
                     if (sub) {
-                        input = sub.config;
+                        this.input = sub.config;
                         localStorage.setItem('currentSubscriptionId', id);
                         this.showManager = false;
                     }
@@ -119,7 +119,7 @@ export const SubscriptionManager = (props) => {
                         type="button"
                         x-on:click="showSaveDialog = true"
                         class="px-3 py-1.5 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center gap-1"
-                        x-bind:disabled="!input || !input.trim()"
+                        x-bind:disabled="!this.input || !this.input.trim()"
                         title={t('saveCurrentSubscription')}
                     >
                         <i class="fas fa-save"></i>
@@ -191,7 +191,7 @@ export const SubscriptionManager = (props) => {
                                     <div class="mt-1 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                         <span x-text="formatDate(sub.updatedAt || sub.createdAt)"></span>
                                         <span class="text-gray-300 dark:text-gray-600">|</span>
-                                        <span x-text={`${(sub.config || '').length} ${t('characters')}`}></span>
+                                        <span x-text="(sub.config || '').length + ' ' + t('characters')"></span>
                                     </div>
                                 </template>
                             </div>

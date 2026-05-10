@@ -142,7 +142,7 @@ export const OperationHistory = (props) => {
                 <template x-for="item in history" x-bind:key="item.id">
                     <div class="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
                         <div class="mt-0.5">
-                            <i class={`fas ${getTypeIcon(item.type)} ${getTypeColor(item.type)}`}></i>
+                            <i x-bind:class="[getTypeIcon(item.type) ? 'fas ' + getTypeIcon(item.type) : '', getTypeColor(item.type)]"></i>
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="text-sm font-medium text-gray-900 dark:text-white" x-text="item.description"></div>

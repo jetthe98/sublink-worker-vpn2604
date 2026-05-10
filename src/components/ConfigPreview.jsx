@@ -16,7 +16,7 @@ export const ConfigPreview = (props) => {
                 ruleCount: 0,
 
                 async openPreview() {
-                    if (!input || !input.trim()) {
+                    if (!this.input || !this.input.trim()) {
                         previewError = '请先输入订阅内容';
                         return;
                     }
@@ -33,7 +33,7 @@ export const ConfigPreview = (props) => {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                input: input,
+                                input: this.input,
                                 configType: configType,
                                 selectedRules: JSON.stringify(selectedRules),
                                 customRules: JSON.stringify(customRules),
@@ -75,7 +75,7 @@ export const ConfigPreview = (props) => {
                     type="button"
                     x-on:click="openPreview()"
                     class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors duration-200 font-medium flex items-center gap-2"
-                    x-bind:disabled="!input || previewLoading"
+                    x-bind:disabled="!this.input || previewLoading"
                 >
                     <i class="fas" x-bind:class="previewLoading ? 'fa-spinner fa-spin' : 'fa-search'"></i>
                     <span x-text="previewLoading ? '生成中...' : '预览配置'">{t('preview')}</span>

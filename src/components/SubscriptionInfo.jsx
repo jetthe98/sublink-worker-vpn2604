@@ -13,7 +13,7 @@ export const SubscriptionInfo = (props) => {
                 showDetails: false,
 
                 async fetchSubscriptionInfo() {
-                    if (!input || !input.trim()) {
+                    if (!this.input || !this.input.trim()) {
                         this.userInfo = null;
                         return;
                     }
@@ -22,7 +22,7 @@ export const SubscriptionInfo = (props) => {
                     this.error = null;
 
                     try {
-                        const response = await fetch(`/api/v1/subscription/info?url=${encodeURIComponent(input)}`);
+                        const response = await fetch(`/api/v1/subscription/info?url=${encodeURIComponent(this.input)}`);
                         const data = await response.json();
 
                         if (data.error) {
@@ -95,7 +95,7 @@ export const SubscriptionInfo = (props) => {
                     type="button"
                     x-on:click="fetchSubscriptionInfo()"
                     class="px-3 py-1.5 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center gap-1"
-                    x-bind:disabled="!input || !input.trim() || loading"
+                    x-bind:disabled="!this.input || !this.input.trim() || loading"
                 >
                     <i class="fas" x-bind:class="loading ? 'fa-spinner fa-spin' : 'fa-sync'"></i>
                     {t('refresh') || '刷新'}
@@ -145,7 +145,7 @@ export const SubscriptionInfo = (props) => {
                     <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
                         <div
                             class="bg-primary-600 h-2.5 rounded-full transition-all duration-300"
-                            x-bind:style="`width: ${getUsedPercentage()}%`"
+                            x-bind:style="'width: ' + getUsedPercentage() + '%'"
                         ></div>
                     </div>
                 </div>
@@ -169,7 +169,7 @@ export const SubscriptionInfo = (props) => {
                                     <span>{t('expired') || '已过期'}</span>
                                 </template>
                                 <template x-if="getDaysLeft() > 0">
-                                    <span x-text={`${getDaysLeft()} ${t('daysLeft') || '天剩余'}`}></span>
+                                    <span x-text="getDaysLeft() + ' ' + (t('daysLeft') || '天剩余')"></span>
                                 </template>
                             </span>
                         </div>
