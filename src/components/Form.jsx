@@ -4,6 +4,7 @@ import { PREDEFINED_RULE_SETS, UNIFIED_RULES } from '../config/index.js';
 import { ConfigPreview } from './ConfigPreview.jsx';
 import { CustomRules } from './CustomRules.jsx';
 import { NodeSelector } from './NodeSelector.jsx';
+import { SubscriptionManager } from './SubscriptionManager.jsx';
 import { TextareaWithActions } from './TextareaWithActions.jsx';
 import { ValidatedTextarea } from './ValidatedTextarea.jsx';
 import { formLogicFn } from './formLogic.js';
@@ -158,6 +159,9 @@ export const Form = (props) => {
   </div>
 
           </div>
+
+  {/* Subscription Manager */}
+  <SubscriptionManager t={t} />
 
   {/* Node Selector */ }
   <NodeSelector t={t} />

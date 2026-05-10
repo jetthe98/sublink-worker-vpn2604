@@ -14,6 +14,50 @@ export const NodeSelector = (props) => {
         showGroupManager: false,
         editingProxyName: null,
         tempEditName: '',
+        searchQuery: '',
+        filterProtocol: 'all',
+        showFavorites: false,
+        favoriteNodes: [],
+
+        init() {
+          this.loadFavorites();
+        },
+
+        loadFavorites() {
+          try {
+            this.favoriteNodes = JSON.parse(localStorage.getItem('favoriteNodes') || '[]');
+          } catch {
+            this.favoriteNodes = [];
+          }
+        },
+
+        getProxies() {
+          let result = this.parsedProxies || [];
+
+          if (this.searchQuery) {
+            const query = this.searchQuery.toLowerCase();
+            result = result.filter(p =>
+              (p.name || '').toLowerCase().includes(query) ||
+              (p.server || '').toLowerCase().includes(query)
+            );
+          }
+
+          if (this.filterProtocol !== 'all') {
+            result = result.filter(p =>
+              (p.protocol || '').toLowerCase() === this.filterProtocol
+            );
+          }
+
+          return result;
+        },
+
+        getAvailableProtocols() {
+          const protocols = new Set();
+          (this.parsedProxies || []).forEach(p => {
+            if (p.protocol) protocols.add(p.protocol);
+          });
+          return Array.from(protocols).sort();
+        },
 
         async testProxyLatency(proxy) {
             try {
@@ -61,12 +105,19 @@ export const NodeSelector = (props) => {
         },
 
         getSortedProxies() {
-            if (!this.sortByLatency) return this.parsedProxies;
-            return [...this.parsedProxies].sort((a, b) => {
+            let proxies = this.getProxies();
+            if (!this.sortByLatency) return proxies;
+            return [...proxies].sort((a, b) => {
                 const latA = this.proxyLatencies[a.name]?.latency ?? Infinity;
                 const latB = this.proxyLatencies[b.name]?.latency ?? Infinity;
                 return latA - latB;
             });
+        },
+
+        getFavoriteProxies() {
+          return this.getSortedProxies().filter(p =>
+            this.favoriteNodes.some(f => f.name === p.name)
+          );
         },
 
         startEditProxyName(proxyName, event) {
@@ -92,16 +143,46 @@ export const NodeSelector = (props) => {
         cancelEditName() {
             this.editingProxyName = null;
             this.tempEditName = '';
+        },
+
+        toggleFavorite(proxy, event) {
+          event.stopPropagation();
+          const index = this.favoriteNodes.findIndex(n => n.name === proxy.name);
+          if (index >= 0) {
+            this.favoriteNodes.splice(index, 1);
+          } else {
+            this.favoriteNodes.push({ name: proxy.name, server: proxy.server, protocol: proxy.protocol });
+          }
+          localStorage.setItem('favoriteNodes', JSON.stringify(this.favoriteNodes));
+        },
+
+        isFavorite(proxyName) {
+          return this.favoriteNodes.some(n => n.name === proxyName);
         }
     }"
       class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
     >
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <i class="fas fa-server text-gray-400"></i>
-          {t('nodeSelector')}
-        </h3>
         <div class="flex items-center gap-2">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <i class="fas fa-server text-gray-400"></i>
+            {t('nodeSelector')}
+          </h3>
+          <span class="text-xs text-gray-400 cursor-help" title={t('nodeSelectorTip')}>
+            <i class="fas fa-info-circle"></i>
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            x-on:click="showFavorites = !showFavorites"
+            class="px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+            x-bind:class="showFavorites ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
+            x-show="favoriteNodes.length > 0"
+          >
+            <i class="fas fa-star"></i>
+            <span x-text="favoriteNodes.length"></span>
+          </button>
           <button
             type="button"
             x-on:click="testAllLatencies()"
@@ -141,29 +222,74 @@ export const NodeSelector = (props) => {
       </div>
 
       <div x-show="parsedProxies.length > 0" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-          <div class="flex items-center gap-4">
-            <span class="text-sm text-gray-500 dark:text-gray-400" x-text="`已选择 ${selectedProxyNames.length}/${parsedProxies.length}`"></span>
+        <div class="flex flex-col gap-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex-1 min-w-[200px]">
+              <div class="relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input
+                  type="text"
+                  x-model="searchQuery"
+                  placeholder={t('searchNodes') || '搜索节点...'}
+                  class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <select
+              x-model="filterProtocol"
+              class="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="all">{t('allProtocols') || '全部协议'}</option>
+              <template x-for="proto in getAvailableProtocols()" x-bind:key="proto">
+                <option x-bind:value="proto.toLowerCase()" x-text="proto.toUpperCase()"></option>
+              </template>
+            </select>
             <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" x-model="sortByLatency" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600" />
               <span class="text-sm text-gray-600 dark:text-gray-400">按延迟排序</span>
             </label>
           </div>
-          <div class="flex gap-2">
-            <button
-              type="button"
-              x-on:click="selectAllProxies()"
-              class="px-3 py-1.5 text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            >
-              全选
-            </button>
-            <button
-              type="button"
-              x-on:click="deselectAllProxies()"
-              class="px-3 py-1.5 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
-            >
-              取消全选
-            </button>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-500 dark:text-gray-400" x-text="`已选择 ${selectedProxyNames.length}/${parsedProxies.length}`"></span>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                x-on:click="selectAllProxies()"
+                class="px-3 py-1.5 text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                全选
+              </button>
+              <button
+                type="button"
+                x-on:click="deselectAllProxies()"
+                class="px-3 py-1.5 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+              >
+                取消全选
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div x-show="showFavorites && favoriteNodes.length > 0" class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+          <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2 flex items-center gap-2">
+            <i class="fas fa-star"></i>
+            {t('favorites')}
+          </h4>
+          <div class="space-y-1">
+            <template x-for="proxy in getFavoriteProxies()" x-bind:key="'fav-' + proxy.name">
+              <div
+                class="flex items-center gap-2 p-2 rounded bg-white dark:bg-gray-800 border border-yellow-200 dark:border-yellow-800"
+              >
+                <input
+                  type="checkbox"
+                  x-on:click="toggleProxySelection(proxy.name)"
+                  x-bind:checked="isProxySelected(proxy.name)"
+                  class="w-4 h-4 text-yellow-600 rounded border-yellow-300 focus:ring-yellow-500"
+                />
+                <span class="flex-1 text-sm text-gray-900 dark:text-white truncate" x-text="getProxyDisplayName(proxy.name)"></span>
+                <span class="text-xs text-gray-500" x-text="proxy.protocol?.toUpperCase()"></span>
+              </div>
+            </template>
           </div>
         </div>
 
@@ -179,6 +305,17 @@ export const NodeSelector = (props) => {
                 x-bind:checked="isProxySelected(proxy.name)"
                 class="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
               />
+              <button
+                type="button"
+                x-on:click="toggleFavorite(proxy, $event)"
+                class="ml-2 p-1 hover:scale-110 transition-transform"
+                x-bind:title="isFavorite(proxy.name) ? (t('removeFromFavorites') || '取消收藏') : (t('addToFavorites') || '添加收藏')"
+              >
+                <i
+                  class="fas fa-star"
+                  x-bind:class="isFavorite(proxy.name) ? 'text-yellow-500' : 'text-gray-300 dark:text-gray-600'"
+                ></i>
+              </button>
               <div class="ml-3 flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <template x-if="editingProxyName !== proxy.name">
@@ -194,7 +331,6 @@ export const NodeSelector = (props) => {
                       x-model="tempEditName"
                       x-on:keydown="saveProxyName(proxy.name, $event)"
                       x-on:blur="saveProxyName(proxy.name, $event)"
-                      x-on:click.stop
                       class="flex-1 px-2 py-1 text-sm border border-primary-500 rounded focus:ring-2 focus:ring-primary-400 focus:outline-none dark:bg-gray-900 dark:text-white"
                       x-init="$el.focus(); $el.select();"
                     />
@@ -203,6 +339,7 @@ export const NodeSelector = (props) => {
                     <span
                       class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded cursor-pointer hover:bg-primary-200 dark:hover:bg-primary-900/50"
                       x-on:click="startEditProxyName(proxy.name, $event)"
+                      title={t('customNameTip')}
                     >
                       <i class="fas fa-pen text-[10px]"></i>
                       自定义
@@ -213,6 +350,7 @@ export const NodeSelector = (props) => {
                       type="button"
                       x-on:click="startEditProxyName(proxy.name, $event)"
                       class="opacity-0 group-hover:opacity-100 inline-flex items-center px-1.5 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                      title={t('renameTip')}
                     >
                       <i class="fas fa-pen text-[10px]"></i>
                       重命名
@@ -248,6 +386,11 @@ export const NodeSelector = (props) => {
               </div>
             </label>
           </template>
+        </div>
+
+        <div x-show="getSortedProxies().length === 0 && parsedProxies.length > 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <i class="fas fa-search text-2xl mb-2"></i>
+          <p>没有找到匹配的节点</p>
         </div>
 
         <div x-show="testingLatency" class="mt-4">
