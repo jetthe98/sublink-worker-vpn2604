@@ -1,0 +1,126 @@
+# OpenClash 配置文件模板 - Cloudflare Tunnel
+# 将此配置导入 OpenWrt 的 OpenClash
+
+# ======================
+# 代理节点
+# ======================
+proxies:
+  # Cloudflare Tunnel - HTTP 代理
+  - name: "CF-Home-HTTP"
+    type: http
+    server: proxy.yourdomain.com    # 替换为你的域名
+    port: 443
+    tls: true
+    skip-cert-verify: true
+    sni: proxy.yourdomain.com
+
+  # Cloudflare Tunnel - SOCKS5 代理
+  - name: "CF-Home-SOCKS"
+    type: socks5
+    server: socks.yourdomain.com    # 替换为你的域名
+    port: 443
+    tls: true
+    skip-cert-verify: true
+    sni: socks.yourdomain.com
+
+# ======================
+# 代理组
+# ======================
+proxy-groups:
+  # 默认代理组
+  - name: "Default"
+    type: select
+    proxies:
+      - CF-Home-HTTP
+      - CF-Home-SOCKS
+      - DIRECT
+
+  # 国外网站
+  - name: "Foreign"
+    type: select
+    proxies:
+      - CF-Home-HTTP
+      - CF-Home-SOCKS
+
+  # 国内直连
+  - name: "Domestic"
+    type: select
+    proxies:
+      - DIRECT
+
+  # 自动测速
+  - name: "Auto"
+    type: url-test
+    proxies:
+      - CF-Home-HTTP
+      - CF-Home-SOCKS
+    url: http://www.google.com/generate_204
+    interval: 300
+
+# ======================
+# 分流规则
+# ======================
+rules:
+  # === 国内网站直连 ===
+  # 常见国内域名
+  - DOMAIN-SUFFIX,baidu.com,Domestic
+  - DOMAIN-SUFFIX,taobao.com,Domestic
+  - DOMAIN-SUFFIX,tmall.com,Domestic
+  - DOMAIN-SUFFIX,jd.com,Domestic
+  - DOMAIN-SUFFIX,qq.com,Domestic
+  - DOMAIN-SUFFIX,wechat.com,Domestic
+  - DOMAIN-SUFFIX,alipay.com,Domestic
+  - DOMAIN-SUFFIX,163.com,Domestic
+  - DOMAIN-SUFFIX,bilibili.com,Domestic
+  - DOMAIN-SUFFIX,douyin.com,Domestic
+  - DOMAIN-SUFFIX,weibo.com,Domestic
+  - DOMAIN-SUFFIX,zhihu.com,Domestic
+  - DOMAIN-SUFFIX,github.com.cnpmjs.org,Domestic
+  - DOMAIN-SUFFIX,microsoft.com,Domestic
+  - DOMAIN-SUFFIX,apple.com,Domestic
+  - DOMAIN-SUFFIX,icloud.com,Domestic
+
+  # GEOIP 国内直连
+  - GEOIP,CN,Domestic
+
+  # === 国外网站走隧道 ===
+  # 常见国外域名
+  - DOMAIN-SUFFIX,google.com,Foreign
+  - DOMAIN-SUFFIX,youtube.com,Foreign
+  - DOMAIN-SUFFIX,facebook.com,Foreign
+  - DOMAIN-SUFFIX,twitter.com,Foreign
+  - DOMAIN-SUFFIX,instagram.com,Foreign
+  - DOMAIN-SUFFIX,github.com,Foreign
+  - DOMAIN-SUFFIX,telegram.org,Foreign
+  - DOMAIN-SUFFIX,whatsapp.com,Foreign
+  - DOMAIN-SUFFIX,netflix.com,Foreign
+  - DOMAIN-SUFFIX,spotify.com,Foreign
+  - DOMAIN-SUFFIX,openai.com,Foreign
+
+  # 其他域名走默认代理
+  - MATCH,Default
+
+# ======================
+# DNS 配置
+# ======================
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  
+  nameserver:
+    - https://dns.alidns.com/dns-query          # 阿里 DNS
+    - https://doh.pub/dns-query                 # 腾讯 DNS
+    - tls://dns.rubyfish.cn:853                 # 红鱼 DNS
+  
+  fallback:
+    - https://dns.cloudflare.com/dns-query      # CF DNS
+    - https://dns.google/dns-query              # Google DNS
+    - tls://1.1.1.1:853                         # 1.1.1.1
+
+  fallback-filter:
+    geoip: true
+    ipcidr:
+      - 240.0.0.0/4
+      - 0.0.0.0/32
